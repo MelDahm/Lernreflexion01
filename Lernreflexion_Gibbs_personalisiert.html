@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meine Lernreflexion – Gibbs Cycle</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+  .app { max-width: 720px; width: 100%; background: #fff; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 32px; }
+  .hidden { display: none !important; }
+  h1 { font-size: 22px; font-weight: 700; }
+  h2 { font-size: 18px; margin-bottom: 6px; }
+  .sub { font-size: 14px; color: #666; margin-bottom: 16px; }
+
+  /* ===== LOGIN ===== */
+  .login-box { text-align: center; padding: 20px 0; }
+  .login-box input { display: block; width: 100%; max-width: 300px; margin: 12px auto; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; text-align: center; }
+  .login-box input:focus { outline: none; border-color: #2563eb; }
+  .login-box button { padding: 12px 40px; background: #2563eb; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .login-box button:hover { background: #1d4ed8; }
+  .qr-area { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+  .qr-area img { max-width: 180px; border-radius: 8px; }
+  .qr-area .qr-url { font-size: 12px; color: #2563eb; word-break: break-all; margin-top: 6px; background: #eff6ff; padding: 6px 10px; border-radius: 8px; }
+
+  /* ===== DASHBOARD ===== */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .header .greeting { font-size: 14px; color: #475569; }
+  .header button { padding: 8px 16px; background: #f1f5f9; color: #475569; border: none; border-radius: 10px; font-size: 13px; cursor: pointer; }
+  .header button:hover { background: #e2e8f0; }
+  .btn-new { background: #2563eb !important; color: #fff !important; padding: 10px 24px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600; }
+  .btn-new:hover { background: #1d4ed8 !important; }
+
+  /* Stat cards */
+  .stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .stat-card { flex: 1; min-width: 100px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; text-align: center; }
+  .stat-card .num { font-size: 28px; font-weight: 700; color: #2563eb; }
+  .stat-card .lbl { font-size: 12px; color: #64748b; }
+
+  /* Charts */
+  .chart-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .chart-section h3 { font-size: 14px; margin-bottom: 10px; color: #1e293b; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 8px; min-height: 90px; }
+  .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .chart-bar { width: 100%; max-width: 48px; border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.4s; }
+  .chart-bar-label { font-size: 10px; color: #64748b; margin-top: 4px; text-align: center; word-break: break-word; max-width: 60px; }
+  .feel-neutral { background: #94a3b8; }
+  .feel-positive { background: #10b981; }
+  .feel-negative { background: #ef4444; }
+  .feel-mixed { background: linear-gradient(90deg, #10b981 50%, #ef4444 50%); }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 300px; overflow-y: auto; }
+  .tl-entry { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: 0.2s; }
+  .tl-entry:hover { border-color: #93c5fd; background: #f0f7ff; }
+  .tl-entry .date { font-size: 12px; font-weight: 600; color: #2563eb; }
+  .tl-entry .summary { font-size: 13px; color: #475569; margin-top: 2px; }
+
+  /* ===== REFLECTION FORM ===== */
+  .progress-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .progress-bar { flex: 1; height: 6px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2563eb, #7c3aed); border-radius: 4px; transition: width 0.5s; }
+  .progress-label { font-size: 13px; font-weight: 600; color: #2563eb; min-width: 48px; text-align: right; }
+
+  .dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
+  .dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; background: #e2e8f0; color: #94a3b8; transition: all 0.3s; cursor: pointer; border: none; }
+  .dot.active { background: #2563eb; color: #fff; transform: scale(1.1); box-shadow: 0 2px 10px rgba(37,99,235,0.35); }
+  .dot.done { background: #dbeafe; color: #2563eb; cursor: pointer; }
+  .step { display: none; animation: fade 0.35s ease; }
+  .step.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .step .emoji { font-size: 28px; margin-bottom: 4px; }
+  .step .hint { font-size: 14px; color: #666; margin-bottom: 14px; }
+
+  .opts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-size: 14px; user-select: none; background: #fafafa; }
+  .opt:hover { border-color: #93c5fd; background: #f0f7ff; }
+  .opt.selected { border-color: #2563eb; background: #eff6ff; }
+  .opt input { display: none; }
+  .opt .check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+  .opt.selected .check { background: #2563eb; border-color: #2563eb; }
+  .opt.selected .check::after { content: "✓"; color: #fff; font-size: 12px; font-weight: bold; }
+  .opt.multi .check { border-radius: 4px; }
+
+  textarea { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 50px; }
+  textarea:focus { outline: none; border-color: #2563eb; }
+
+  .btns { display: flex; gap: 10px; margin-top: 10px; }
+  .btns button { padding: 10px 24px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .btn-prev { background: #f1f5f9; color: #475569; }
+  .btn-prev:hover { background: #e2e8f0; }
+  .btn-next { background: #2563eb; color: #fff; margin-left: auto; }
+  .btn-next:hover { background: #1d4ed8; }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ===== RESULT ===== */
+  .result-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.7; max-height: 300px; overflow-y: auto; margin-bottom: 12px; }
+  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .result-actions button { padding: 10px 20px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+  .btn-copy { background: #2563eb; color: #fff; }
+  .btn-copy:hover { background: #1d4ed8; }
+  .btn-print { background: #10b981; color: #fff; }
+  .btn-print:hover { background: #059669; }
+  .btn-save { background: #0d9488; color: #fff; }
+  .btn-save:hover { background: #0f766e; }
+  .btn-dash { background: #f1f5f9; color: #475569; }
+  .btn-dash:hover { background: #e2e8f0; }
+
+  /* ===== HISTORY DETAIL ===== */
+  .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+
+  .badge { display: inline-block; background: #dbeafe; color: #1e40af; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+  .empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+
+  @media (max-width: 480px) {
+    .app { padding: 18px; }
+    .stats { flex-direction: column; }
+    .chart-bars { min-height: 70px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+
+<script>
+// ====================================================================
+// DATA
+// ====================================================================
+const STEPS = [
+  {
+    emoji: "📝", id: "description",
+    title: "1 – Was habe ich gelernt?",
+    hint: "Beschreibe kurz, was du gemacht hast. Nur Fakten, keine Bewertung.",
+    options: [
+      "Ich habe einen Text gelesen / ein Kapitel bearbeitet.",
+      "Ich habe Karteikarten geschrieben und damit gelernt.",
+      "Ich habe Übungsaufgaben / Altklausuren gerechnet.",
+      "Ich habe eine Zusammenfassung geschrieben.",
+      "Ich habe mir Videos / Tutorials dazu angesehen.",
+      "Ich habe mit einer Mitschülerin zusammen gelernt.",
+      "Ich habe ein Mindmap / eine Skizze erstellt.",
+      "Ich habe den Stoff nur durchgelesen."
+    ],
+    freeLabel: "Oder frei formulieren:"
+  },
+  {
+    emoji: "😌", id: "feelings",
+    title: "2 – Wie ging es mir dabei?",
+    hint: "Welche Gefühle kamen beim Lernen auf?",
+    options: [
+      "Ich war motiviert und bin gut reingekommen.",
+      "Ich war neugierig – das Thema hat mich interessiert.",
+      "Ich war gelangweilt und konnte mich schwer konzentrieren.",
+      "Ich war überfordert und wusste nicht, wo ich anfangen soll.",
+      "Ich war gestresst, weil ich wenig Zeit hatte.",
+      "Ich war zufrieden, weil ich etwas verstanden habe.",
+      "Ich war frustriert, weil es nicht sofort geklappt hat.",
+      "Ich war unsicher, ob ich das richtige lerne."
+    ],
+    freeLabel: "Oder eigene Gefühle ergänzen:"
+  },
+  {
+    emoji: "⭐", id: "evaluation",
+    title: "3 – Was lief gut? Was lief schlecht?",
+    hint: "Bewerte deine Lerneinheit ehrlich.",
+    options: [
+      "Gut: Ich konnte mich lange konzentrieren.",
+      "Gut: Die Methode hat mir geholfen, den Stoff zu verstehen.",
+      "Gut: Ich habe gemerkt, dass ich Fortschritte mache.",
+      "Gut: Ich habe keine Ablenkung zugelassen.",
+      "Schlecht: Ich wurde oft abgelenkt (Handy, Geräusche, …).",
+      "Schlecht: Ich habe zu lange an einer Sache gehangen.",
+      "Schlecht: Ich habe nur auswendig gelernt, nicht verstanden.",
+      "Schlecht: Ich hatte keinen klaren Plan, was ich lernen will."
+    ],
+    freeLabel: "Eigene Punkte:"
+  },
+  {
+    emoji: "🔍", id: "analysis",
+    title: "4 – Warum war das so?",
+    hint: "Welche Ursachen stecken dahinter? Was sagt dir das über dich?",
+    options: [
+      "Ich war ausgeschlafen / gut ernährt – das hat geholfen.",
+      "Die Tageszeit war perfekt für mich (morgens / abends).",
+      "Die Methode passt einfach zu mir.",
+      "Ich hatte ein klares Ziel vor Augen – das hat fokussiert.",
+      "Ich war müde / unkonzentriert – das hat mich gebremst.",
+      "Die Umgebung war zu laut / zu unruhig.",
+      "Ich wusste nicht genau, WAS ich lernen soll.",
+      "Mir hat das Vorwissen gefehlt, um Neues zu verstehen."
+    ],
+    freeLabel: "Eigene Erkenntnis:"
+  },
+  {
+    emoji: "💡", id: "conclusion",
+    title: "5 – Was nehme ich mit?",
+    hint: "Dein persönliches Fazit – was war wertvoll, was würdest du anders machen?",
+    options: [
+      "Ich würde genau diese Methode wieder nutzen.",
+      "Ich würde mehr Pausen einplanen.",
+      "Ich würde früher anfangen, um Stress zu vermeiden.",
+      "Ich würde aktiver lernen (nicht nur lesen).",
+      "Ich würde mir vorher klare Lernziele setzen.",
+      "Ich würde öfter mit anderen zusammen lernen.",
+      "Ich würde eine ruhigere Umgebung suchen.",
+      "Ich würde mir Hilfe holen, wenn ich nicht weiterkomme."
+    ],
+    freeLabel: "Mein persönliches Fazit:"
+  },
+  {
+    emoji: "🎯", id: "actionplan",
+    title: "6 – Was mache ich konkret anders?",
+    hint: "Formuliere EINEN festen Vorsatz für dein nächstes Lernen.",
+    options: [
+      "Morgen lege ich das Handy in ein anderes Zimmer beim Lernen.",
+      "Beim nächsten Mal teile ich den Stoff in kleinere Portionen auf.",
+      "Ich fange spätestens 5 Tage vor der Prüfung an.",
+      "Ich nutze Karteikarten statt nur Durchlesen.",
+      "Ich belohne mich nach jeder gelernten Einheit.",
+      "Ich suche mir eine ruhige Ecke zum Lernen.",
+      "Ich erkläre den Stoff einer Mitschülerin (oder mir selbst laut).",
+      "Ich schreibe vor dem Lernen auf: 'Dieses Ziel habe ich heute.'"
+    ],
+    freeLabel: "Mein Vorsatz:",
+    singleChoice: true
+  }
+];
+
+// ====================================================================
+// STATE
+// ====================================================================
+let currentName = localStorage.getItem("gibbs_name") || "";
+let entries = [];
+let currentStepIdx = 0;
+let selections = STEPS.map(() => []);
+let freeTexts = STEPS.map(() => "");
+
+// ====================================================================
+// STORAGE
+// ====================================================================
+function loadData(name) {
+  try {
+    const raw = localStorage.getItem("gibbs_" + name);
+    return raw ? JSON.parse(raw) : { entries: [] };
+  } catch { return { entries: [] }; }
+}
+function saveData(name, data) {
+  localStorage.setItem("gibbs_" + name, JSON.stringify(data));
+}
+
+// ====================================================================
+// RENDER ENGINE
+// ====================================================================
+const app = document.getElementById("app");
+
+// --- SCREENS ---
+function showLogin() {
+  const url = "https://meldahm.github.io/lernreflexion/";
+  const qrImg = "https://chart.googleapis.com/chart?cht=qr&chs=250x250&chl=" + encodeURIComponent(url) + "&choe=UTF-8";
+  app.innerHTML = `
+    <div class="login-box">
+      <h1>🧠 Meine Lernreflexion</h1>
+      <div class="sub">Gibbs Reflective Cycle – interaktiv</div>
+      <div class="qr-area">
+        <img src="${qrImg}" alt="QR-Code">
+        <div class="qr-url">${url}</div>
+      </div>
+      <input type="text" id="loginName" placeholder="Dein Name ..." value="${currentName}" autofocus>
+      <button onclick="handleLogin()">✨ Los geht's</button>
+      <div style="margin-top:14px;font-size:12px;color:#94a3b8;">👇 Nach dem Scannen hier Namen eingeben<br>Deine Daten bleiben auf deinem Gerät.</div>
+    </div>
+  `;
+  document.getElementById("loginName").addEventListener("keydown", e => { if (e.key === "Enter") handleLogin(); });
+}
+
+function handleLogin() {
+  const name = document.getElementById("loginName").value.trim();
+  if (!name) return;
+  currentName = name;
+  localStorage.setItem("gibbs_name", name);
+  const data = loadData(name);
+  entries = data.entries || [];
+  showDashboard();
+}
+
+function showDashboard() {
+  const count = entries.length;
+  const recent = entries.slice().reverse();
+
+  // Compute stats
+  const totalFeelings = entries.flatMap(e => e.selections[1] || []);
+  const posFeelings = totalFeelings.filter(i => [0,1,5].includes(i)).length;
+  const negFeelings = totalFeelings.filter(i => [2,3,4,6,7].includes(i)).length;
+  const actionCount = entries.filter(e => (e.selections[5] || []).length > 0).length;
+
+  // Feelings chart data
+  const chartData = entries.map((e, idx) => {
+    const f = e.selections[1] || [];
+    const hasPos = f.some(i => [0,1,5].includes(i));
+    const hasNeg = f.some(i => [2,3,4,6,7].includes(i));
+    let type = "neutral";
+    if (hasPos && hasNeg) type = "mixed";
+    else if (hasPos) type = "positive";
+    else if (hasNeg) type = "negative";
+    return { label: (idx + 1).toString(), type, date: e.date };
+  });
+
+  // Method counts (step 0)
+  const methodCounts = {};
+  entries.forEach(e => {
+    (e.selections[0] || []).forEach(oi => {
+      const txt = STEPS[0].options[oi].replace(/^[A-ZÄÖÜa-zäöü].+?: /, "").replace("Ich habe ", "").replace(".", "");
+      methodCounts[txt] = (methodCounts[txt] || 0) + 1;
+    });
+  });
+  const topMethods = Object.entries(methodCounts).sort((a,b) => b[1]-a[1]).slice(0, 4);
+
+  // Recent vorsätze
+  const recentActions = entries.slice().reverse().filter(e => (e.selections[5] || []).length > 0).slice(0, 5);
+
+  app.innerHTML = `
+    <div class="header">
+      <div><h1>👋 Hallo, ${currentName}</h1><div class="greeting">${count > 0 ? "Du hast bereits <strong>" + count + "</strong> Lernreflexion" + (count === 1 ? "" : "en") + " erstellt." : "Starte deine erste Reflexion."}</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button onclick="logout()">↻ Wechseln</button>
+        <button class="btn-new" onclick="startNewReflection()">+ Neue Reflexion</button>
+      </div>
+    </div>
+
+    ${count > 0 ? `
+    <div class="stats">
+      <div class="stat-card"><div class="num">${count}</div><div class="lbl">Reflexionen</div></div>
+      <div class="stat-card"><div class="num">${posFeelings + negFeelings > 0 ? Math.round(posFeelings / (posFeelings + negFeelings) * 100) + "%" : "–"}</div><div class="lbl">Positive Gefühle</div></div>
+      <div class="stat-card"><div class="num">${actionCount}</div><div class="lbl">Vorsätze gefasst</div></div>
+    </div>
+    ` : `<div class="empty">👩‍🎓 Noch keine Reflexionen.<br>Klick auf „+ Neue Reflexion“, um zu starten.</div>`}
+
+    ${chartData.length > 1 ? `
+    <div class="chart-section">
+      <h3>📊 Meine Gefühle im Verlauf</h3>
+      <div class="chart-bars">
+        ${chartData.map(d => {
+          const h = d.type === "mixed" ? 42 : d.type === "positive" ? 60 : d.type === "negative" ? 60 : 24;
+          return `<div class="chart-bar-wrap"><div class="chart-bar feel-${d.type}" style="height:${h}px;width:32px;"></div><div class="chart-bar-label">${d.label}</div></div>`;
+        }).join("")}
+      </div>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#64748b;justify-content:center;">
+        <span>🟢 Positiv</span>
+        <span>🔴 Negativ</span>
+        <span>🔵 Gemischt</span>
+        <span>⚪ Neutral</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:4px;">Jeder Balken = eine Reflexion (Reihenfolge: 1., 2., 3. …)</div>
+    </div>
+    ` : ""}
+
+    ${topMethods.length > 0 ? `
+    <div class="chart-section">
+      <h3>📚 Meine häufigsten Lernmethoden</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${topMethods.map(([m,c]) => `<span class="badge">${m} (${c}x)</span>`).join("")}
+      </div>
+    </div>
+    ` : ""}
+
+    ${recentActions.length > 0 ? `
+    <div class="chart-section">
+      <h3>🎯 Meine bisherigen Vorsätze</h3>
+      <div style="font-size:13px;">
+        ${recentActions.map(e => {
+          const optIdx = (e.selections[5] || [])[0];
+          const vorsatz = optIdx !== undefined ? "→ " + STEPS[5].options[optIdx] : "";
+          const custom = e.freeTexts[5] ? "✏️ " + e.freeTexts[5] : "";
+          return `<div style="padding:4px 0;border-bottom:1px solid #f1f5f9;"><span style="color:#2563eb;font-weight:600;">${e.date}:</span> ${vorsatz}${custom}</div>`;
+        }).join("")}
+      </div>
+    </div>
+    ` : ""}
+
+    ${recent.length > 0 ? `
+    <div class="chart-section">
+      <h3>📋 Alle Einträge</h3>
+      <div class="timeline">
+        ${recent.map((e, i) => {
+          const step0 = (e.selections[0] || []).map(oi => STEPS[0].options[oi].replace(/\.$/, "")).join("; ");
+          const summary = step0 ? "Lernmethode: " + step0.substring(0, 60) + (step0.length > 60 ? "…" : "") : "";
+          return `<div class="tl-entry" onclick="showEntry(${entries.length - 1 - i})">
+            <div class="date">${e.date}</div>
+            <div class="summary">${summary || "Keine Details"}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+    ` : ""}
+  `;
+}
+
+// ====================================================================
+// REFLECTION FORM
+// ====================================================================
+function startNewReflection() {
+  selections = STEPS.map(() => []);
+  freeTexts = STEPS.map(() => "");
+  currentStepIdx = 0;
+  document.getElementById("app").innerHTML = `
+    <div class="header">
+      <h1>🧠 Neue Reflexion</h1>
+      <button onclick="showDashboard()">× Schließen</button>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="pf"></div></div>
+      <span class="progress-label" id="pl">1/${STEPS.length}</span>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div id="stepContainer"></div>
+  `;
+  renderDots();
+  renderStep(currentStepIdx);
+  updateProgress();
+}
+
+function renderDots() {
+  const c = document.getElementById("dots");
+  if (!c) return;
+  c.innerHTML = STEPS.map((s, i) =>
+    `<button class="dot" data-idx="${i}">${i + 1}</button>`
+  ).join("");
+  c.querySelectorAll(".dot").forEach(b => {
+    b.addEventListener("click", () => {
+      const i = parseInt(b.dataset.idx);
+      if (i < currentStepIdx) { goToStep(i); }
+    });
+  });
+}
+
+function updateDots() {
+  document.querySelectorAll(".dot").forEach((d, i) => {
+    d.classList.remove("active", "done");
+    if (i === currentStepIdx) d.classList.add("active");
+    else if (i < currentStepIdx) d.classList.add("done");
+  });
+}
+
+function updateProgress() {
+  const fill = document.getElementById("pf");
+  const label = document.getElementById("pl");
+  if (!fill || !label) return;
+  const pct = currentStepIdx / (STEPS.length - 1) * 100;
+  fill.style.width = Math.min(pct, 100) + "%";
+  label.textContent = `${currentStepIdx + 1}/${STEPS.length}`;
+}
+
+function goToStep(idx) {
+  if (idx < 0 || idx >= STEPS.length) return;
+  const ta = document.getElementById(`free_${currentStepIdx}`);
+  if (ta) freeTexts[currentStepIdx] = ta.value;
+  currentStepIdx = idx;
+  renderStep(idx);
+  updateDots();
+  updateProgress();
+}
+
+function renderStep(idx) {
+  const s = STEPS[idx];
+  const container = document.getElementById("stepContainer");
+  if (!container) return;
+  const isLast = idx === STEPS.length - 1;
+
+  let html = `<div class="step active"><div class="emoji">${s.emoji}</div>`;
+  html += `<h2>${s.title}</h2><div class="hint">${s.hint}</div>`;
+  html += `<div class="opts" id="opts">`;
+
+  s.options.forEach((opt, oi) => {
+    const sel = selections[idx].includes(oi);
+    const mc = s.singleChoice ? "" : "multi";
+    html += `<label class="opt ${sel ? "selected" : ""} ${mc}" data-oi="${oi}">
+      <input type="${s.singleChoice ? "radio" : "checkbox"}" name="s_${idx}" ${sel ? "checked" : ""}>
+      <span class="check"></span><span>${opt}</span>
+    </label>`;
+  });
+
+  html += `</div>`;
+
+  if (s.freeLabel) {
+    // For evaluation step, add two text fields
+    if (idx === 2) {
+      html += `<label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-top:6px;">Was war konkret gut?</label>`;
+      html += `<textarea id="free2_${idx}" placeholder="z.B. Ich habe endlich verstanden, wie …">${freeTexts[idx]}</textarea>`;
+      html += `<label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-top:6px;">Was war konkret schlecht?</label>`;
+      html += `<textarea id="free2b_${idx}" placeholder="z.B. Ich habe mich ständig ablenken lassen …">${freeTexts[idx + "_b"] || ""}</textarea>`;
+    } else {
+      html += `<label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-top:6px;">${s.freeLabel}</label>`;
+      html += `<textarea id="free_${idx}" placeholder="Deine Gedanken …">${freeTexts[idx]}</textarea>`;
+    }
+  }
+
+  html += `<div class="btns">`;
+  if (idx > 0) html += `<button class="btn-prev" onclick="prevStep()">← Zurück</button>`;
+  const disabled = selections[idx].length === 0 ? "disabled" : "";
+  if (!isLast) {
+    html += `<button class="btn-next" ${disabled} onclick="nextStep()">Weiter →</button>`;
+  } else {
+    html += `<button class="btn-next" onclick="finishReflection()">✨ Speichern & abschließen</button>`;
+  }
+  html += `</div></div>`;
+
+  container.innerHTML = html;
+
+  // Event listeners
+  document.querySelectorAll(".opt").forEach(el => {
+    el.addEventListener("click", (e) => {
+      if (e.target.tagName === "INPUT") return;
+      const oi = parseInt(el.dataset.oi);
+      toggleOpt(idx, oi, s.singleChoice);
+    });
+  });
+
+  // Free text
+  ["free_", "free2_", "free2b_"].forEach(prefix => {
+    const ta = document.getElementById(prefix + idx);
+    if (ta) {
+      ta.addEventListener("input", () => {
+        if (prefix === "free2b_") freeTexts[idx + "_b"] = ta.value;
+        else freeTexts[idx] = ta.value;
+      });
+    }
+  });
+}
+
+function toggleOpt(stepIdx, optIdx, singleChoice) {
+  if (singleChoice) {
+    selections[stepIdx] = [optIdx];
+  } else {
+    const pos = selections[stepIdx].indexOf(optIdx);
+    if (pos > -1) selections[stepIdx].splice(pos, 1);
+    else selections[stepIdx].push(optIdx);
+  }
+  // Re-render opts
+  const optsDiv = document.getElementById("opts");
+  if (!optsDiv) return;
+  optsDiv.querySelectorAll(".opt").forEach(el => {
+    const oi = parseInt(el.dataset.oi);
+    const sel = selections[stepIdx].includes(oi);
+    el.classList.toggle("selected", sel);
+    el.querySelector("input").checked = sel;
+  });
+  const btn = document.querySelector(".btn-next");
+  if (btn && !btn.textContent.includes("abschließen")) {
+    btn.disabled = selections[stepIdx].length === 0;
+  }
+}
+
+function nextStep() {
+  if (selections[currentStepIdx].length === 0) return;
+  const ta = document.getElementById(`free_${currentStepIdx}`);
+  if (ta) freeTexts[currentStepIdx] = ta.value;
+  // Also save free2b if present
+  ["free2_", "free2b_"].forEach(prefix => {
+    const el = document.getElementById(prefix + currentStepIdx);
+    if (el) {
+      if (prefix === "free2b_") freeTexts[currentStepIdx + "_b"] = el.value;
+      else freeTexts[currentStepIdx] = el.value;
+    }
+  });
+  if (currentStepIdx < STEPS.length - 1) {
+    goToStep(currentStepIdx + 1);
+  }
+}
+
+function prevStep() {
+  const ta = document.getElementById(`free_${currentStepIdx}`);
+  if (ta) freeTexts[currentStepIdx] = ta.value;
+  ["free2_", "free2b_"].forEach(prefix => {
+    const el = document.getElementById(prefix + currentStepIdx);
+    if (el) {
+      if (prefix === "free2b_") freeTexts[currentStepIdx + "_b"] = el.value;
+      else freeTexts[currentStepIdx] = el.value;
+    }
+  });
+  if (currentStepIdx > 0) goToStep(currentStepIdx - 1);
+}
+
+function finishReflection() {
+  // Save last textareas
+  const last = STEPS.length - 1;
+  const ta = document.getElementById(`free_${last}`);
+  if (ta) freeTexts[last] = ta.value;
+
+  // Build entry
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const entry = {
+    date: dateStr,
+    timestamp: now.getTime(),
+    selections: selections.map(arr => [...arr]),
+    freeTexts: { ...freeTexts }
+  };
+  entries.push(entry);
+  const data = loadData(currentName);
+  data.entries = entries;
+  saveData(currentName, data);
+
+  // Show result
+  const labels = ["Das habe ich gemacht","Meine Gefühle dabei","Was gut / schlecht lief","Warum das so war","Mein Fazit","Mein Vorsatz"];
+  let text = "";
+  STEPS.forEach((s, i) => {
+    text += `\n📌 ${labels[i]}\n`;
+    const chosen = (selections[i] || []).map(oi => `  • ${s.options[oi]}`).join("\n");
+    text += (chosen || "  • ") + "\n";
+    if (freeTexts[i] && freeTexts[i].trim()) text += `  ✏️ ${freeTexts[i].trim()}\n`;
+    if (i === 2 && freeTexts[i + "_b"] && freeTexts[i + "_b"].trim()) text += `  ✏️ ${freeTexts[i + "_b"].trim()}\n`;
+    text += "\n";
+  });
+  text = text.trim();
+
+  const totalSel = selections.reduce((s, arr) => s + arr.length, 0);
+
+  document.getElementById("stepContainer").innerHTML = `
+    <div class="step active">
+      <div class="emoji">✅</div>
+      <h2>Reflexion gespeichert!</h2>
+      <div class="badge">${totalSel} Antworten ausgewählt</div>
+      <div class="result-box" id="resultBox">${text}</div>
+      <div class="result-actions">
+        <button class="btn-copy" onclick="copyResult()">📋 Kopieren</button>
+        <button class="btn-print" onclick="printResult()">🖨️ Drucken</button>
+        <button class="btn-dash" onclick="showDashboard()" style="margin-left:auto;">📊 Zum Dashboard</button>
+      </div>
+      <div style="margin-top:14px;font-size:13px;color:#666;">
+        💡 <strong>Dein Fortschritt:</strong> Je öfter du reflektierst, desto besser siehst du, was bei dir funktioniert.
+        Deine Einträge werden im Dashboard gesammelt – dann siehst du, wie sich deine Gefühle und Methoden entwickeln.
+      </div>
+    </div>
+  `;
+  updateDots();
+  document.querySelectorAll(".dot").forEach(d => d.classList.add("done"));
+}
+
+// ====================================================================
+// HISTORY DETAIL
+// ====================================================================
+function showEntry(idx) {
+  const e = entries[idx];
+  if (!e) return;
+  const labels = ["Das habe ich gemacht","Meine Gefühle dabei","Was gut / schlecht lief","Warum das so war","Mein Fazit","Mein Vorsatz"];
+  let text = "";
+  STEPS.forEach((s, i) => {
+    text += `\n📌 ${labels[i]}\n`;
+    const chosen = (e.selections[i] || []).map(oi => `  • ${s.options[oi]}`).join("\n");
+    text += (chosen || "  • ") + "\n";
+    if (e.freeTexts[i] && e.freeTexts[i].trim()) text += `  ✏️ ${e.freeTexts[i].trim()}\n`;
+    if (i === 2 && e.freeTexts[i + "_b"] && e.freeTexts[i + "_b"].trim()) text += `  ✏️ ${e.freeTexts[i + "_b"].trim()}\n`;
+    text += "\n";
+  });
+  text = text.trim();
+
+  document.getElementById("app").innerHTML = `
+    <div class="detail-header">
+      <div><h1>📅 ${e.date}</h1></div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="showDashboard()">← Alle Einträge</button>
+        <button class="btn-new" onclick="startNewReflection()">+ Neue Reflexion</button>
+      </div>
+    </div>
+    <div class="result-box" style="max-height:none;">${text}</div>
+    <div class="result-actions">
+      <button class="btn-copy" onclick="copyResult()">📋 Kopieren</button>
+      <button class="btn-print" onclick="printResult()">🖨️ Drucken</button>
+    </div>
+  `;
+}
+
+// ====================================================================
+// HELPERS
+// ====================================================================
+function copyResult() {
+  const box = document.getElementById("resultBox");
+  if (!box) return;
+  navigator.clipboard.writeText(box.textContent).then(() => {
+    const btn = document.querySelector(".btn-copy");
+    if (btn) { btn.textContent = "✅ Kopiert!"; setTimeout(() => btn.textContent = "📋 Kopieren", 2000); }
+  });
+}
+
+function printResult() {
+  const box = document.getElementById("resultBox");
+  if (!box) return;
+  const w = window.open("", "", "width=800,height=600");
+  w.document.write(`<html><head><title>Lernreflexion</title><style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; font-size: 14px; line-height: 1.7; }
+    h1 { font-size: 20px; }
+    pre { white-space: pre-wrap; }
+  </style></head><body><h1>🧠 Meine Lernreflexion – ${currentName}</h1><pre>${box.textContent}</pre></body></html>`);
+  w.document.close();
+  w.print();
+}
+
+function logout() {
+  if (entries.length > 0 && !confirm("Wirklich wechseln? Deine aktuellen Einträge bleiben gespeichert.")) return;
+  currentName = "";
+  localStorage.removeItem("gibbs_name");
+  showLogin();
+}
+
+// ====================================================================
+// START
+// ====================================================================
+if (currentName) {
+  const data = loadData(currentName);
+  entries = data.entries || [];
+  showDashboard();
+} else {
+  showLogin();
+}
+</script>
+</body>
+</html>
